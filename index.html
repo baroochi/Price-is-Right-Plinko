@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Price Is Right - Plinko Pegs</title>
+  <link rel="icon" href="build/resources/assets/thumbs/icon_152.png">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #0d0a2d url('assets/gfx/bg.jpg') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+    #gameContainer {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    #gameContainer canvas {
+      display: block;
+      max-width: 100vw;
+      max-height: 100vh;
+      object-fit: contain;
+      margin: auto;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.75);
+    }
+    /* Landscape View: fill 100% viewport height, aspect ratio 4:3 */
+    @media (min-aspect-ratio: 1/1) {
+      #gameContainer canvas {
+        height: 100vh !important;
+        width: min(100vw, calc(100vh * (4 / 3))) !important;
+      }
+    }
+    /* Portrait View: fill 100% viewport width, aspect ratio 3:4 (height = 4/3 width) */
+    @media (max-aspect-ratio: 1/1) {
+      #gameContainer canvas {
+        width: 100vw !important;
+        height: min(100vh, calc(100vw * (4 / 3))) !important;
+      }
+    }
+    /* Fullscreen Toggle Button */
+    #fsToggleBtn {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 99999;
+      background: rgba(13, 10, 45, 0.75);
+      color: #ffd700;
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    #fsToggleBtn:hover {
+      background: rgba(255, 215, 0, 0.2);
+      border-color: #ffd700;
+      transform: scale(1.05);
+    }
+  </style>
+  <!-- ========================================================= -->
+  <!-- PLINKO REVIVAL: Box2D / Arena MVC Dependency Injection Patch -->
+  <!-- ========================================================= -->
+  <script src="piece_defs.js"></script>
+  <script>
+  (function() {
+      console.log("%c[Plinko Patch] Initializing Dependency Injection Shims...", "color: #00ff88; font-weight: bold;");
+
+      // Global Registry for Active Level & Physics State
+      window.__PLINKO_RUNTIME__ = {
+          activeLevelRoot: null,
+          activePhysicsWorld: null,
+          physicsScale: 30.0, // Standard Box2DWeb meter-to-pixel scale factor
+          mockRoot: null
+      };
+
+      // -------------------------------------------------------------
+      // 1. Resilient Fallback Proxy for `currentLevelRoot`
+      // -------------------------------------------------------------
+      const createLevelRootProxy = (targetRoot) => {
+          return new Proxy(targetRoot || {}, {
+              get(target, prop) {
+                  // Return original property if present
+                  if (prop in target && target[prop] !== undefined && target[prop] !== null) {
+                      if (typeof target[prop] === 'function') {
+                          return target[prop].bind(target);
+                      }
+                      return target[prop];
+                  }
+
+                  // Deobfuscated: .physics() / _0x8ffd94(0xa72) / getPhysicsWorld
+                  if (prop === 'physics' || prop === '_0xa72' || prop === 'getPhysicsWorld') {
+                      return function() {
+                          const activeRoot = window.__PLINKO_RUNTIME__.activeLevelRoot;
+                          if (activeRoot && typeof activeRoot.physics === 'function' && activeRoot !== target) {
+                              return activeRoot.physics();
+                          }
+                          if (activeRoot && typeof activeRoot.getPhysicsWorld === 'function' && activeRoot !== target) {
+                              return activeRoot.getPhysicsWorld();
+                          }
+                          // Fallback Box2D World Provider
+                          return window.__PLINKO_RUNTIME__.activePhysicsWorld || {
+                              createBody: function(bodyDef) {
+                                  console.warn("[Plinko Patch] createBody called on fallback physics wrapper");
+                                  if (window.Box2D && window.Box2D.Dynamics && window.Box2D.Dynamics.b2World) {
+                                      if (!window.__GLOBAL_B2_WORLD__) {
+                                          const gravity = new window.Box2D.Common.Math.b2Vec2(0, 9.8);
+                                          window.__GLOBAL_B2_WORLD__ = new window.Box2D.Dynamics.b2World(gravity, true);
+                                      }
+                                      return window.__GLOBAL_B2_WORLD__.CreateBody(bodyDef || new window.Box2D.Dynamics.b2BodyDef());
+                                  }
+                                  const fb = {
+                                      createFixture: function() { return {}; },
+                                      CreateFixture: function() { return {}; },
+                                      setBullet: function() {},
+                                      SetBullet: function() {},
+                                      setDynamic: function() {},
+                                      setStatic: function() {},
+                                      setPosition: function(p) { this.position = p; },
+                                      setActive: function() {},
+                                      SetActive: function() {},
+                                      setLinearVelocity: function() {},
+                                      SetLinearVelocity: function() {},
+                                      setPositionAndAngle: function() {},
+                                      SetPositionAndAngle: function() {},
+                                      setTransform: function() {},
+                                      SetTransform: function() {},
+                                      setUserData: function() {},
+                                      SetUserData: function() {},
+                                      getUserData: function() { return {}; },
+                                      GetUserData: function() { return {}; },
+                                      getPosition: function() { return { x: 0, y: 0 }; },
+                                      GetPosition: function() { return { x: 0, y: 0 }; },
+                                      getAngle: function() { return 0; },
+                                      GetAngle: function() { return 0; }
+                                  };
+                                  return new Proxy(fb, { get(t, p) { if (p in t) return t[p]; return function() { return {}; }; } });
+                              },
+                              CreateBody: function(bodyDef) { return this.createBody(bodyDef); },
+                              destroyBody: function() {},
+                              DestroyBody: function() {}
+                          };
+                      };
+                  }
+
+                  // Deobfuscated: .getPhisicsToPixelScale() / _0x8ffd94(0x277a)
+                  if (prop === 'getPhisicsToPixelScale' || prop === 'getPhysicsToPixelScale' || prop === 'meterScale' || prop === '_0x277a') {
+                      return function() {
+                          const activeRoot = window.__PLINKO_RUNTIME__.activeLevelRoot;
+                          if (activeRoot && typeof activeRoot.getPhisicsToPixelScale === 'function' && activeRoot !== target) {
+                              return activeRoot.getPhisicsToPixelScale();
+                          }
+                          if (activeRoot && typeof activeRoot.meterScale === 'function' && activeRoot !== target) {
+                              return activeRoot.meterScale();
+                          }
+                          return window.__PLINKO_RUNTIME__.physicsScale;
+                      };
+                  }
+
+                  return undefined;
+              }
+          });
+      };
+
+      window.__PLINKO_RUNTIME__.mockRoot = createLevelRootProxy({});
+
+      // -------------------------------------------------------------
+      // 2. Global Prototype Accessor Trapping for `currentLevelRoot`
+      // -------------------------------------------------------------
+      Object.defineProperty(Object.prototype, 'currentLevelRoot', {
+          get: function() {
+              if (this._explicit_currentLevelRoot) {
+                  return this._explicit_currentLevelRoot;
+              }
+              return window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot;
+          },
+          set: function(val) {
+              if (val && typeof val === 'object') {
+                  window.__PLINKO_RUNTIME__.activeLevelRoot = val;
+                  if (typeof val.physics === 'function' || typeof val.getPhysicsWorld === 'function') {
+                      try {
+                          const worldInstance = (val.physics || val.getPhysicsWorld).call(val);
+                          if (worldInstance) {
+                              window.__PLINKO_RUNTIME__.activePhysicsWorld = worldInstance;
+                          }
+                      } catch (e) {}
+                  }
+                  this._explicit_currentLevelRoot = val;
+              } else if (val === null || val === undefined) {
+                  this._explicit_currentLevelRoot = window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot;
+              }
+          },
+          configurable: true,
+          enumerable: false
+      });
+
+      // -------------------------------------------------------------
+      // 3. Child View Option Cascader (`_options` Hook)
+      // -------------------------------------------------------------
+      Object.defineProperty(Object.prototype, '_options', {
+          get: function() {
+              return this.__stored_options || { currentLevelRoot: window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot };
+          },
+          set: function(opt) {
+              if (opt && typeof opt === 'object') {
+                  if (!opt.currentLevelRoot) {
+                      opt.currentLevelRoot = window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot;
+                  }
+              } else if (!opt) {
+                  opt = { currentLevelRoot: window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot };
+              }
+              this.__stored_options = opt;
+          },
+          configurable: true,
+          enumerable: false
+      });
+
+      // -------------------------------------------------------------
+      // 3.5 PHYSICAL_OBJECT_DEFS Safety Proxy (Real CDN Assets)
+      // -------------------------------------------------------------
+      const defaultPhysicsBodyDef = {
+          shape: 'box',
+          width: 70,
+          height: 140,
+          physicalScaleDown: 30,
+          friction: 0.2,
+          mass: 1,
+          restitution: 0.2,
+          isTrigger: true
+      };
+
+      const defaultPhysicsDef = {
+          physics: {
+              isDynamic: false,
+              physicalBodies: [defaultPhysicsBodyDef]
+          },
+          visual: {
+              scalePercentX: 1,
+              scalePercentY: 1
+          }
+      };
+
+      const createDefsProxy = (target) => {
+          return new Proxy(target || {}, {
+              get: function(t, prop) {
+                  if (t[prop] && t[prop].physics) {
+                      return t[prop];
+                  }
+                  return defaultPhysicsDef;
+              }
+          });
+      };
+
+      const cdnDefs = window.__MOCK_PIECE_DEFS__ || {};
+      let _realPhysicalDefs = createDefsProxy({
+          'bucketTrigger': cdnDefs['/assets/pieces/bucketTrigger/objDef.json'] || defaultPhysicsDef,
+          'pegTypes/defaultPeg': cdnDefs['/assets/pieces/pegTypes/defaultPeg/objDef.json'] || defaultPhysicsDef,
+          'pegTypes/magnetPeg': cdnDefs['/assets/pieces/pegTypes/magnetPeg/objDef.json'] || defaultPhysicsDef,
+          'puck': cdnDefs['/assets/pieces/puck/objDef.json'] || defaultPhysicsDef,
+          'playfieldWallDown': cdnDefs['/assets/pieces/playfieldWallDown/objDef.json'] || defaultPhysicsDef,
+          'playfield': cdnDefs['/assets/pieces/playfield/objDef.json'] || defaultPhysicsDef
+      });
+
+      Object.defineProperty(Object.prototype, 'PHYSICAL_OBJECT_DEFS', {
+          get: function() {
+              return this.__physical_defs || _realPhysicalDefs;
+          },
+          set: function(val) {
+              if (val && typeof val === 'object') {
+                  this.__physical_defs = createDefsProxy(val);
+              } else {
+                  this.__physical_defs = _realPhysicalDefs;
+              }
+          },
+          configurable: true,
+          enumerable: false
+      });
+
+      // -------------------------------------------------------------
+      // 3.6 In-Memory Asset Interceptor (XHR, Fetch, Image)
+      // -------------------------------------------------------------
+      const matchMock = (url) => {
+          if (typeof url !== 'string') return null;
+          const defs = window.__MOCK_PIECE_DEFS__ || {};
+          const key = Object.keys(defs).find(k => url.includes(k) || (k.includes('objDef.json') && url.includes(k.split('/')[3] + '/objDef.json')));
+          return key ? defs[key] : null;
+      };
+
+      const origOpen = XMLHttpRequest.prototype.open;
+      const origSend = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+          this._mockUrl = url;
+          this._mockData = matchMock(url);
+          return origOpen.call(this, method, url, ...rest);
+      };
+      XMLHttpRequest.prototype.send = function(body) {
+          if (this._mockData) {
+              const jsonText = JSON.stringify(this._mockData);
+              Object.defineProperties(this, {
+                  status: { get: () => 200 },
+                  readyState: { get: () => 4 },
+                  responseText: { get: () => jsonText },
+                  response: { get: () => (this.responseType === 'json' ? this._mockData : jsonText) }
+              });
+              setTimeout(() => {
+                  if (this.onreadystatechange) this.onreadystatechange(new Event('readystatechange'));
+                  if (this.onload) this.onload(new ProgressEvent('load'));
+                  this.dispatchEvent(new Event('load'));
+              }, 0);
+              return;
+          }
+          return origSend.call(this, body);
+      };
+
+      const origFetch = window.fetch;
+      if (origFetch) {
+          window.fetch = function(input, init) {
+              const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+              const mock = matchMock(url);
+              if (mock) {
+                  return Promise.resolve(new Response(JSON.stringify(mock), {
+                      status: 200,
+                      headers: { 'Content-Type': 'application/json' }
+                  }));
+              }
+              return origFetch.call(this, input, init);
+          };
+      }
+
+      // Background Image Interceptor
+      const origImgSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+      if (origImgSrc && origImgSrc.set) {
+          Object.defineProperty(HTMLImageElement.prototype, 'src', {
+              set: function(val) {
+                  if (typeof val === 'string' && val.includes('bg.jpg') && window.__BG_BASE64__) {
+                      val = window.__BG_BASE64__;
+                  }
+                  return origImgSrc.set.call(this, val);
+              },
+              get: origImgSrc.get,
+              configurable: true
+          });
+      }
+
+      // -------------------------------------------------------------
+      // 4. Box2D World Hook & Lowercase Bridge
+      // -------------------------------------------------------------
+      const hookBox2D = function() {
+          if (window.Box2D && window.Box2D.Dynamics && window.Box2D.Dynamics.b2World) {
+              const originalb2World = window.Box2D.Dynamics.b2World;
+              window.Box2D.Dynamics.b2World = function(gravity, doSleep) {
+                  const instance = new originalb2World(gravity, doSleep);
+                  window.__PLINKO_RUNTIME__.activePhysicsWorld = instance;
+                  console.log("%c[Plinko Patch] Box2D b2World captured successfully.", "color: #00ff88; font-weight: bold;");
+                  return instance;
+              };
+              window.Box2D.Dynamics.b2World.prototype = originalb2World.prototype;
+
+              // Bridge common casing differences
+              const wp = originalb2World.prototype;
+              if (wp.CreateBody && !wp.createBody) wp.createBody = wp.CreateBody;
+              if (wp.DestroyBody && !wp.destroyBody) wp.destroyBody = wp.DestroyBody;
+
+              if (window.Box2D.Dynamics.b2Body && window.Box2D.Dynamics.b2Body.prototype) {
+                  const bp = window.Box2D.Dynamics.b2Body.prototype;
+                  if (bp.CreateFixture && !bp.createFixture) bp.createFixture = bp.CreateFixture;
+                  if (bp.SetBullet && !bp.setBullet) bp.setBullet = bp.SetBullet;
+                  if (bp.SetActive && !bp.setActive) bp.setActive = bp.SetActive;
+                  if (bp.SetLinearVelocity && !bp.setLinearVelocity) bp.setLinearVelocity = bp.SetLinearVelocity;
+                  if (bp.SetPositionAndAngle && !bp.setPositionAndAngle) bp.setPositionAndAngle = bp.SetPositionAndAngle;
+                  if (bp.SetTransform && !bp.setTransform) bp.setTransform = bp.SetTransform;
+                  if (bp.GetPosition && !bp.getPosition) bp.getPosition = bp.GetPosition;
+                  if (bp.GetAngle && !bp.getAngle) bp.getAngle = bp.GetAngle;
+                  if (bp.SetUserData && !bp.setUserData) bp.setUserData = bp.SetUserData;
+                  if (bp.GetUserData && !bp.getUserData) bp.getUserData = bp.GetUserData;
+              }
+          }
+      };
+
+      if (window.Box2D) {
+          hookBox2D();
+      } else {
+          let _b2Timer = setInterval(() => {
+              if (window.Box2D) {
+                  hookBox2D();
+                  clearInterval(_b2Timer);
+              }
+          }, 50);
+      }
+
+      // -------------------------------------------------------------
+      // 5. PixiJS initPlugins Safety Guard & Logger
+      // -------------------------------------------------------------
+      let _realInitPlugins;
+      Object.defineProperty(Object.prototype, 'initPlugins', {
+          get: function() {
+              return _realInitPlugins;
+          },
+          set: function(originalFn) {
+              console.log("%c[Plinko Patch] Captured initPlugins assignment!", "color: #00ffff; font-weight: bold;");
+              _realInitPlugins = function(pluginMap) {
+                  if (!this.plugins) {
+                      this.plugins = {};
+                  }
+                  if (pluginMap && typeof pluginMap === 'object') {
+                      for (let pluginName in pluginMap) {
+                          const PluginConstructor = pluginMap[pluginName];
+                          if (typeof PluginConstructor === 'function') {
+                              try {
+                                  this.plugins[pluginName] = new PluginConstructor(this);
+                              } catch (err) {
+                                  console.error(`[Plinko Patch] Error initializing plugin "${pluginName}":`, err);
+                              }
+                          }
+                      }
+                  }
+              };
+          },
+          configurable: true,
+          enumerable: false
+      });
+
+      // KEY CHECK LOGGER
+      setInterval(() => {
+          if (typeof a0_0x692e === 'function' && !window.__CHECKED_KEYS__) {
+              window.__CHECKED_KEYS__ = true;
+              console.log('%c[DEOBFUSCATED KEYS]', 'color: magenta; font-size: 16px; font-weight: bold;', {
+                  '0x410': a0_0x692e(0x410),
+                  '0x8ea': a0_0x692e(0x8ea),
+                  '0xa72': a0_0x692e(0xa72),
+                  '0x277a': a0_0x692e(0x277a),
+                  '0x1738': a0_0x692e(0x1738),
+                  '0x507': a0_0x692e(0x507),
+                  '0x25db': a0_0x692e(0x25db),
+                  '0x1c94': a0_0x692e(0x1c94),
+                  '0x7f2': a0_0x692e(0x7f2),
+                  '0x35e': a0_0x692e(0x35e)
+              });
+          }
+      }, 50);
+
+      console.log("%c[Plinko Patch] Shims applied. Ready for main.min.js execution.", "color: #00ff88; font-weight: bold;");
+  })();
+    const origError = console.error;
+    console.error = function(...args) {
+      origError.apply(console, args);
+      for (const a of args) {
+        if (a && a.stack) {
+          console.log('%c FULL_STACK: ' + a.stack, 'background: red; color: white; font-size: 14px;');
+        } else if (a && typeof a === 'object') {
+          try {
+            console.log('%c FULL_ERROR_DETAILS: ' + JSON.stringify(a, Object.getOwnPropertyNames(a)), 'background: red; color: yellow; font-size: 14px;');
+          } catch(e) {}
+        }
+      }
+    };
+    window.addEventListener('error', function(e) {
+      console.log('%c UNCAUGHT_ERROR: ' + (e.error ? e.error.stack : e.message), 'background: red; color: white; font-size: 14px;');
+    });
+    const logStyle = 'background:purple; color:white';
+    const log = { mess: [] };
+    const subject = {
+      component: undefined,
+      options: undefined,
+      constructor(component, options) {
+        this.component = component;
+        this.options = options;
+      },
+      next(event) {
+        log.mess.push(event);
+        console.log(`%c arenax event ${JSON.stringify(event)} `, logStyle);
+      },
+      subscribe(fn) {
+        console.log(`%c arenax subscribe ${JSON.stringify(fn)} `, logStyle);
+      },
+    };
+
+    function renderGame() {
+      console.log('%c loading script ', logStyle);
+      const sdk = window.__arenax_v1__['PriceIsRightPlinkoGame'].game;
+      window.sdk = sdk;
+      console.log('%c register game ', logStyle);
+      sdk.register(subject, {
+        assetOriginUrl: '',
+        configUrl: '',
+        locale: 'en',
+        eventList: [],
+        rewardVideoAvailable: true
+      });
+
+      sdk.render(640, 480, 'gameContainer');
+    }
+  </script>
+</head>
+<body>
+  <button id="fsToggleBtn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+    </svg>
+    <span>Fullscreen</span>
+  </button>
+
+  <div id="gameContainer"></div>
+
+  <script>
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.warn('Error entering fullscreen:', err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      const btnSpan = document.querySelector('#fsToggleBtn span');
+      if (btnSpan) {
+        btnSpan.textContent = document.fullscreenElement ? 'Exit Full' : 'Fullscreen';
+      }
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
+    });
+
+    function loadJS() {
+      const scriptTag = document.createElement('script');
+      scriptTag.src = 'main.min.js?t=' + Date.now();
+      scriptTag.addEventListener('load', renderGame);
+      document.head.appendChild(scriptTag);
+    }
+    loadJS();
+  </script>
+</body>
+</html>
