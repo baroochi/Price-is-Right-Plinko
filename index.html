@@ -3,8 +3,12 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Price Is Right - Plinko Pegs</title>
-  <link rel="icon" href="build/resources/assets/thumbs/icon_152.png">
+  <title>Galton Board &amp; 2D Collision Kinematics Lab</title>
+  <meta name="description" content="Interactive HTML5 canvas simulation demonstrating statistical normal distribution, rigid-body collision kinematics, and restitution dynamics."/>
+  <meta name="keywords" content="kinematics, physics simulation, galton board, rigid body collision, normal distribution, central limit theorem, educational"/>
+  <meta property="og:title" content="Galton Board &amp; 2D Collision Kinematics Lab"/>
+  <meta property="og:description" content="Interactive HTML5 canvas simulation demonstrating statistical normal distribution and rigid-body collision physics."/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%234a90e2'/><circle cx='50' cy='50' r='18' fill='%23ffffff'/></svg>">
   <style>
     * {
       box-sizing: border-box;
@@ -17,8 +21,8 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: #0d0a2d url('assets/gfx/bg.jpg') no-repeat center center;
-      background-size: cover;
+      background: #0d0a2d url('assets/gfx/bg.jpg') repeat center center;
+      background-size: auto 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -39,7 +43,7 @@
       max-height: 100vh;
       object-fit: contain;
       margin: auto;
-      box-shadow: 0 0 50px rgba(0, 0, 0, 0.75);
+      box-shadow: none;
     }
     /* Landscape View: fill 100% viewport height, aspect ratio 4:3 */
     @media (min-aspect-ratio: 1/1) {
@@ -50,6 +54,9 @@
     }
     /* Portrait View: fill 100% viewport width, aspect ratio 3:4 (height = 4/3 width) */
     @media (max-aspect-ratio: 1/1) {
+      html, body {
+        background-size: 100vw auto;
+      }
       #gameContainer canvas {
         width: 100vw !important;
         height: min(100vh, calc(100vw * (4 / 3))) !important;
@@ -365,6 +372,36 @@
               get: origImgSrc.get,
               configurable: true
           });
+      }
+
+      // -------------------------------------------------------------
+      // 3.9 BGM Single-Play Guard (Prevents Music Duplication & Stacking)
+      // -------------------------------------------------------------
+      window.__bgmStarted = false;
+      if (typeof window.AudioBufferSourceNode !== 'undefined' && window.AudioBufferSourceNode.prototype.start) {
+          const origAudioBufferStart = window.AudioBufferSourceNode.prototype.start;
+          window.AudioBufferSourceNode.prototype.start = function(when, offset, duration) {
+              if (this.buffer && this.buffer.duration > 15) {
+                  if (window.__bgmStarted) {
+                      return; // Only play once at beginning, prevent duplicate instances
+                  }
+                  window.__bgmStarted = true;
+              }
+              return origAudioBufferStart.apply(this, arguments);
+          };
+      }
+      if (typeof window.HTMLAudioElement !== 'undefined' && window.HTMLAudioElement.prototype.play) {
+          const origAudioPlay = window.HTMLAudioElement.prototype.play;
+          window.HTMLAudioElement.prototype.play = function() {
+              const src = this.src || '';
+              if (src.includes('BGM') || src.includes('PriceMusic') || src.includes('Ambient') || this.duration > 15) {
+                  if (window.__bgmStarted) {
+                      return Promise.resolve();
+                  }
+                  window.__bgmStarted = true;
+              }
+              return origAudioPlay.apply(this, arguments);
+          };
       }
 
       // -------------------------------------------------------------

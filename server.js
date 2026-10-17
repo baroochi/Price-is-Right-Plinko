@@ -81,6 +81,6 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`=======================================================`);
-    console.log(` Plinko Node Server running at http://localhost:${PORT}/`);
+    console.log(` Kinematics Simulation Server running at http://localhost:${PORT}/`);
     console.log(`=======================================================`);
 });

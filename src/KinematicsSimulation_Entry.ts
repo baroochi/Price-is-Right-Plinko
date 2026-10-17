@@ -1,5 +1,5 @@
 /**
- * Plinko Game Module: PriceIsRightPlinkoGame_Entry
+ * Kinematics Simulation Entry Module
  * Webpack Module ID: 0x4cf5
  * Original File: main.min.js
  */
@@ -34,7 +34,7 @@ export const game: IArenaGameEntry = {
   options: undefined,
 
   /**
-   * Registers the game with the ArenaX host platform and dispatches `GAME_REGISTERED`.
+   * Registers the simulation with the host platform and dispatches `GAME_REGISTERED`.
    */
   register(arenaInstance: any, options: any): void {
     this.options = options;
@@ -51,7 +51,7 @@ export const game: IArenaGameEntry = {
   },
 
   /**
-   * Sets up the runtime environment and boots the Plinko game inside the target DOM element.
+   * Sets up the runtime environment and boots the kinematics simulation inside the target DOM element.
    */
   render(container: any, props: any, elementId: string): void {
     setup({

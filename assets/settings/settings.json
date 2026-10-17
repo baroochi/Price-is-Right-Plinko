@@ -1,11 +1,11 @@
 {
   "general": {
-    "showArkadiumLogo":                 1,
+    "showArkadiumLogo":                 0,
     "clientAPI": "",
     "showVersionInGame":                0,
     "gameMode":                         "NORMAL",
     "useArenaScoring":                  false,
-    "useArenaTracking":                 true
+    "useArenaTracking":                 false
   },
 
   "scoring": {

@@ -1,5 +1,5 @@
 /**
- * Plinko Game Module: LevelRootView_Physics_Box2D
+ * Kinematics Simulation Module: LevelRootView_Physics_Box2D
  * Webpack Module ID: 0x4577
  * Original File: main.min.js
  */
@@ -18,8 +18,8 @@ import {
 import { GameplayLogic } from './logic/GameplayLogic';
 import { AnimateContents } from './constants/AnimateContents';
 import { PhysicalObjectBase } from './views/PhysicalObjectBase';
-import { PlinkoGamePuckModel } from './models/PlinkoGamePuckModel';
-import { PlinkoPegModel } from './models/PlinkoPegModel';
+import { KinematicsPuckModel } from './models/KinematicsPuckModel';
+import { LatticePegModel } from './models/LatticePegModel';
 import { BottomBucketAssemblyView } from './views/BottomBucketAssemblyView';
 import { PegElementView } from './views/PegElementView';
 import { PhysicalObjectModel } from './models/PhysicalObjectModel';
@@ -45,7 +45,7 @@ import { GameConstants } from './constants/GameConstants';
 import * as Planck from 'planck-js';
 
 /**
- * Manages the active Plinko playfield, Planck.js (Box2D) physics world simulation,
+ * Manages the active kinematics lattice playfield, Planck.js (Box2D) physics world simulation,
  * collision event routing, magnetic peg forces, chip spawning, and visual effects.
  */
 export class LevelRootView extends AnimateViewBase {
@@ -160,7 +160,7 @@ export class LevelRootView extends AnimateViewBase {
 
         if (cellType === 1) {
           // Standard Peg slot
-          const pegModel = new PlinkoPegModel();
+          const pegModel = new LatticePegModel();
           pegModel.gameplayModel = this.$model;
           const posX = col * gridSepX;
           const posY = row * gridSepY;
@@ -355,7 +355,7 @@ export class LevelRootView extends AnimateViewBase {
   }
 
   /**
-   * Spawns a Plinko chip at the specified X coordinate at the top of the board (`y = -200`)
+   * Spawns a kinematic test particle at the specified X coordinate at the top of the board (`y = -200`)
    * with a random horizontal drop variance impulse.
    */
   public spawnChipInPoint(spawnX: number): void {
@@ -406,7 +406,7 @@ export class LevelRootView extends AnimateViewBase {
 
   /**
    * Applies attractive magnetic forces from nearby magnetic pegs (`currentPegType === 1`)
-   * to each active Plinko chip in the physics world.
+   * to each active kinematic test particle in the physics world.
    */
   public executeAdditionalPhysics(deltaTime: number): void {
     const activeBalls = this.$model.ActiveBallList;
@@ -714,20 +714,20 @@ export class LevelRootView extends AnimateViewBase {
   }
 
   /**
-   * Instantiates a Plinko chip (`gamePuckElementView`) and its motion trail (`gamePuckTrailView`).
+   * Instantiates a kinematic test particle (`gamePuckElementView`) and its motion trail (`gamePuckTrailView`).
    */
   public SpawnBall(
     ballIndex: number,
     posX: number,
     posY: number,
-    existingModel?: PlinkoGamePuckModel,
+    existingModel?: KinematicsPuckModel,
     isGolden?: boolean,
     isLucky?: boolean,
     horizontalImpulse?: number
-  ): PlinkoGamePuckModel {
+  ): KinematicsPuckModel {
     let puckModel = existingModel;
     if (puckModel == null) {
-      puckModel = new PlinkoGamePuckModel();
+      puckModel = new KinematicsPuckModel();
       puckModel.currentPuckType = 0;
       puckModel.currentPuckType |= isGolden ? 1 : 0;
       puckModel.currentPuckType |= isLucky ? 2 : 0;

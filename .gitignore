@@ -1,0 +1,27 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local Development Utilities
+start-game.bat
+server.js
+tools/
+scratch/
+deobf_out/
+*.bak
+*.test.js
+
+# Dependencies & Deployment Cache
+node_modules/
+.npm
+.wrangler/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor & Environment
+.vscode/
+.idea/
+*.swp
+*.swo

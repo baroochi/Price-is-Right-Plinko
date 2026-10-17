@@ -1,5 +1,5 @@
 /**
- * Plinko Game Module: GameProgression_Storage (GameplayModel)
+ * Kinematics Simulation Module: GameProgression_Storage (GameplayModel)
  * Webpack Module ID: 0x176b4
  * Original File: main.min.js
  */
@@ -53,8 +53,8 @@ export enum PlayerType {
 }
 
 /**
- * Central state model for Plinko gameplay, storing active balls, pegs, walls,
- * bottom scoring buckets, wall light multipliers, round progression, and local/cloud persistence.
+ * Central state model for kinematics simulation progression, storing active test particles, deflectors, barriers,
+ * collection bins, impulse multipliers, cycle progression, and local/cloud persistence.
  */
 @Singleton
 export class GameplayModel {

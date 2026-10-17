@@ -1,5 +1,5 @@
 /**
- * Plinko Game Module: GameController_StateMachine (RootView)
+ * Kinematics Simulation Module: GameController_StateMachine (RootView)
  * Webpack Module ID: 0x360
  * Original File: main.min.js
  */

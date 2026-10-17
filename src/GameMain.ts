@@ -1,5 +1,5 @@
 /**
- * Plinko Game Module: GameMain
+ * Kinematics Simulation Module: GameMain
  * Webpack Module ID: 0x13428
  * Original File: main.min.js
  */

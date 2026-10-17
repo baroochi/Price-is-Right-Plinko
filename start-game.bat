@@ -1,5 +1,5 @@
 @echo off
-title The Price is Right Plinko - Local Server
+title Kinematics and Probability Simulation - Local Server
 cd /d "%~dp0"
 
 where node >nul 2>nul

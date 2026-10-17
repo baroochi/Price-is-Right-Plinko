@@ -1,5 +1,5 @@
 /**
- * Plinko Game Module: Games_Config_Languages
+ * Kinematics Simulation Module: Games_Config_Languages
  * Webpack Module ID: 0xdf1c
  * Original File: main.min.js
  */

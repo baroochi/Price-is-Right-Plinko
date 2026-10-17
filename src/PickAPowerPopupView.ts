@@ -1,5 +1,5 @@
 /**
- * Plinko Game Module: GameConstants (PickAPowerPopupView)
+ * Kinematics Simulation Module: GameConstants (PickAPowerPopupView)
  * Webpack Module ID: 0x6c6c
  * Original File: main.min.js
  */

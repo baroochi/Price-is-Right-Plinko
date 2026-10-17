@@ -1,5 +1,5 @@
 /**
- * Plinko Game Module: GameBoardView_Collisions
+ * Kinematics Simulation Module: GameBoardView_Collisions
  * Webpack Module ID: 0x1937
  * Original File: main.min.js
  */
@@ -35,7 +35,7 @@ export interface IGameBoardViewOptions {
 
 /**
  * Manages the visual representation, static physics colliders, score bars,
- * wall lights, and bottom bucket highlight states for the Plinko game board.
+ * wall lights, and bottom bucket highlight states for the Galton lattice simulation board.
  */
 export class GameBoardView extends AnimateViewBase {
   private _options: IGameBoardViewOptions;
