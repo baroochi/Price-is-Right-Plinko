@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Galton Board &amp; 2D Collision Kinematics Lab</title>
   <meta name="description" content="Interactive HTML5 canvas simulation demonstrating statistical normal distribution, rigid-body collision kinematics, and restitution dynamics."/>
   <meta name="keywords" content="kinematics, physics simulation, galton board, rigid body collision, normal distribution, central limit theorem, educational"/>
@@ -62,15 +65,69 @@
         height: min(100vh, calc(100vw * (4 / 3))) !important;
       }
     }
-    /* Fullscreen Toggle Button */
-    #fsToggleBtn {
+    /* Theme Variables & Transitions */
+    :root {
+      --theme-filter: none;
+      --theme-bg-overlay: transparent;
+      --theme-accent: #ffd700;
+      --theme-border: rgba(255, 215, 0, 0.4);
+    }
+    body.theme-classic {
+      --theme-filter: none;
+      --theme-accent: #ffd700;
+      --theme-border: rgba(255, 215, 0, 0.4);
+    }
+    body.theme-cyberpunk {
+      --theme-filter: hue-rotate(50deg) saturate(1.4) contrast(1.08);
+      --theme-bg-overlay: rgba(26, 8, 38, 0.4);
+      --theme-accent: #00ffff;
+      --theme-border: rgba(0, 255, 255, 0.5);
+    }
+    body.theme-matrix {
+      --theme-filter: hue-rotate(110deg) saturate(1.45) brightness(0.95);
+      --theme-bg-overlay: rgba(4, 20, 9, 0.45);
+      --theme-accent: #00ff66;
+      --theme-border: rgba(0, 255, 102, 0.5);
+    }
+    body.theme-sunset {
+      --theme-filter: hue-rotate(300deg) saturate(1.6) contrast(1.05);
+      --theme-bg-overlay: rgba(43, 11, 30, 0.4);
+      --theme-accent: #ff007f;
+      --theme-border: rgba(255, 0, 127, 0.5);
+    }
+    body.theme-midnight {
+      --theme-filter: hue-rotate(205deg) saturate(0.55) brightness(0.85) contrast(1.18);
+      --theme-bg-overlay: rgba(8, 8, 12, 0.6);
+      --theme-accent: #e5c07b;
+      --theme-border: rgba(229, 192, 123, 0.5);
+    }
+    body.theme-frost {
+      --theme-filter: hue-rotate(175deg) saturate(1.3) brightness(1.1);
+      --theme-bg-overlay: rgba(5, 25, 45, 0.4);
+      --theme-accent: #38bdf8;
+      --theme-border: rgba(56, 189, 248, 0.5);
+    }
+
+    #gameContainer canvas {
+      filter: var(--theme-filter);
+      transition: filter 0.4s ease;
+    }
+
+    /* Top Navigation Control Bar */
+    #topControlsBar {
       position: fixed;
       top: 14px;
       right: 14px;
       z-index: 99999;
-      background: rgba(13, 10, 45, 0.75);
-      color: #ffd700;
-      border: 1px solid rgba(255, 215, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-btn {
+      background: rgba(13, 10, 45, 0.85);
+      color: var(--theme-accent);
+      border: 1px solid var(--theme-border);
       border-radius: 8px;
       padding: 8px 14px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -83,23 +140,251 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      user-select: none;
     }
-    #fsToggleBtn:hover {
-      background: rgba(255, 215, 0, 0.2);
-      border-color: #ffd700;
-      transform: scale(1.05);
+    .top-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px) scale(1.03);
+    }
+    .top-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    /* Glassmorphism Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-card {
+      background: rgba(18, 14, 48, 0.95);
+      border: 1px solid var(--theme-border);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--theme-border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 24px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: var(--theme-accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #aaa;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .close-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* Theme Grid */
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .theme-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px 10px;
+      text-align: center;
+      cursor: pointer;
+      color: #eee;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .theme-card:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--theme-accent);
+      transform: translateY(-2px);
+    }
+    .theme-card.active {
+      border-color: var(--theme-accent);
+      background: rgba(255, 215, 0, 0.12);
+      color: var(--theme-accent);
+    }
+    .theme-preview {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    .preview-classic { background: linear-gradient(135deg, #0d0a2d, #ffd700); }
+    .preview-cyberpunk { background: linear-gradient(135deg, #1a0826, #00ffff, #ff007f); }
+    .preview-matrix { background: linear-gradient(135deg, #041409, #00ff66); }
+    .preview-sunset { background: linear-gradient(135deg, #2b0b1e, #ff007f, #ffaa00); }
+    .preview-midnight { background: linear-gradient(135deg, #08080c, #e5c07b); }
+    .preview-frost { background: linear-gradient(135deg, #05192d, #38bdf8); }
+
+    /* Dev Console Styles */
+    .dev-section {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .dev-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .dev-btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .dev-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: var(--theme-accent);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .dev-btn:active {
+      transform: translateY(1px);
+    }
+    .dev-btn.gold {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: rgba(255, 215, 0, 0.4);
+      color: #ffd700;
+    }
+    .dev-btn.gold:hover {
+      background: rgba(255, 215, 0, 0.25);
+    }
+    .dev-btn.cyan {
+      background: rgba(0, 255, 255, 0.15);
+      border-color: rgba(0, 255, 255, 0.4);
+      color: #00ffff;
+    }
+    .dev-btn.green {
+      background: rgba(0, 255, 102, 0.15);
+      border-color: rgba(0, 255, 102, 0.4);
+      color: #00ff66;
+    }
+
+    /* Range input styling */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .slider-row label {
+      width: 90px;
+      color: #cbd5e1;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--theme-accent);
+    }
+    .slider-val {
+      width: 45px;
+      text-align: right;
+      font-family: monospace;
+      color: var(--theme-accent);
+    }
+
+    /* Toast Notification */
+    #devToast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(50px);
+      background: rgba(15, 23, 42, 0.95);
+      color: #f8fafc;
+      border: 1px solid var(--theme-accent);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      border-radius: 30px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 100001;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #devToast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
   </style>
   <!-- ========================================================= -->
-  <!-- PLINKO REVIVAL: Box2D / Arena MVC Dependency Injection Patch -->
+  <!-- KINEMATICS SIMULATION: Physics & Box2D Web Injection -->
   <!-- ========================================================= -->
-  <script src="piece_defs.js"></script>
+  <script src="piece_defs.js?v=1.0.33"></script>
   <script>
   (function() {
-      console.log("%c[Plinko Patch] Initializing Dependency Injection Shims...", "color: #00ff88; font-weight: bold;");
+      console.log("%c[Kinematics Simulation] Initializing Dependency Injection Shims...", "color: #00ff88; font-weight: bold;");
 
       // Global Registry for Active Level & Physics State
-      window.__PLINKO_RUNTIME__ = {
+      window.__SIM_RUNTIME__ = {
           activeLevelRoot: null,
           activePhysicsWorld: null,
           physicsScale: 30.0, // Standard Box2DWeb meter-to-pixel scale factor
@@ -123,7 +408,7 @@
                   // Deobfuscated: .physics() / _0x8ffd94(0xa72) / getPhysicsWorld
                   if (prop === 'physics' || prop === '_0xa72' || prop === 'getPhysicsWorld') {
                       return function() {
-                          const activeRoot = window.__PLINKO_RUNTIME__.activeLevelRoot;
+                          const activeRoot = window.__SIM_RUNTIME__.activeLevelRoot;
                           if (activeRoot && typeof activeRoot.physics === 'function' && activeRoot !== target) {
                               return activeRoot.physics();
                           }
@@ -131,9 +416,9 @@
                               return activeRoot.getPhysicsWorld();
                           }
                           // Fallback Box2D World Provider
-                          return window.__PLINKO_RUNTIME__.activePhysicsWorld || {
+                          return window.__SIM_RUNTIME__.activePhysicsWorld || {
                               createBody: function(bodyDef) {
-                                  console.warn("[Plinko Patch] createBody called on fallback physics wrapper");
+                                  console.warn("[Kinematics Simulation] createBody called on fallback physics wrapper");
                                   if (window.Box2D && window.Box2D.Dynamics && window.Box2D.Dynamics.b2World) {
                                       if (!window.__GLOBAL_B2_WORLD__) {
                                           const gravity = new window.Box2D.Common.Math.b2Vec2(0, 9.8);
@@ -178,14 +463,14 @@
                   // Deobfuscated: .getPhisicsToPixelScale() / _0x8ffd94(0x277a)
                   if (prop === 'getPhisicsToPixelScale' || prop === 'getPhysicsToPixelScale' || prop === 'meterScale' || prop === '_0x277a') {
                       return function() {
-                          const activeRoot = window.__PLINKO_RUNTIME__.activeLevelRoot;
+                          const activeRoot = window.__SIM_RUNTIME__.activeLevelRoot;
                           if (activeRoot && typeof activeRoot.getPhisicsToPixelScale === 'function' && activeRoot !== target) {
                               return activeRoot.getPhisicsToPixelScale();
                           }
                           if (activeRoot && typeof activeRoot.meterScale === 'function' && activeRoot !== target) {
                               return activeRoot.meterScale();
                           }
-                          return window.__PLINKO_RUNTIME__.physicsScale;
+                          return window.__SIM_RUNTIME__.physicsScale;
                       };
                   }
 
@@ -194,7 +479,7 @@
           });
       };
 
-      window.__PLINKO_RUNTIME__.mockRoot = createLevelRootProxy({});
+      window.__SIM_RUNTIME__.mockRoot = createLevelRootProxy({});
 
       // -------------------------------------------------------------
       // 2. Global Prototype Accessor Trapping for `currentLevelRoot`
@@ -204,22 +489,22 @@
               if (this._explicit_currentLevelRoot) {
                   return this._explicit_currentLevelRoot;
               }
-              return window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot;
+              return window.__SIM_RUNTIME__.activeLevelRoot || window.__SIM_RUNTIME__.mockRoot;
           },
           set: function(val) {
               if (val && typeof val === 'object') {
-                  window.__PLINKO_RUNTIME__.activeLevelRoot = val;
+                  window.__SIM_RUNTIME__.activeLevelRoot = val;
                   if (typeof val.physics === 'function' || typeof val.getPhysicsWorld === 'function') {
                       try {
                           const worldInstance = (val.physics || val.getPhysicsWorld).call(val);
                           if (worldInstance) {
-                              window.__PLINKO_RUNTIME__.activePhysicsWorld = worldInstance;
+                              window.__SIM_RUNTIME__.activePhysicsWorld = worldInstance;
                           }
                       } catch (e) {}
                   }
                   this._explicit_currentLevelRoot = val;
               } else if (val === null || val === undefined) {
-                  this._explicit_currentLevelRoot = window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot;
+                  this._explicit_currentLevelRoot = window.__SIM_RUNTIME__.activeLevelRoot || window.__SIM_RUNTIME__.mockRoot;
               }
           },
           configurable: true,
@@ -231,15 +516,15 @@
       // -------------------------------------------------------------
       Object.defineProperty(Object.prototype, '_options', {
           get: function() {
-              return this.__stored_options || { currentLevelRoot: window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot };
+              return this.__stored_options || { currentLevelRoot: window.__SIM_RUNTIME__.activeLevelRoot || window.__SIM_RUNTIME__.mockRoot };
           },
           set: function(opt) {
               if (opt && typeof opt === 'object') {
                   if (!opt.currentLevelRoot) {
-                      opt.currentLevelRoot = window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot;
+                      opt.currentLevelRoot = window.__SIM_RUNTIME__.activeLevelRoot || window.__SIM_RUNTIME__.mockRoot;
                   }
               } else if (!opt) {
-                  opt = { currentLevelRoot: window.__PLINKO_RUNTIME__.activeLevelRoot || window.__PLINKO_RUNTIME__.mockRoot };
+                  opt = { currentLevelRoot: window.__SIM_RUNTIME__.activeLevelRoot || window.__SIM_RUNTIME__.mockRoot };
               }
               this.__stored_options = opt;
           },
@@ -311,8 +596,12 @@
       // -------------------------------------------------------------
       // 3.6 In-Memory Asset Interceptor (XHR, Fetch, Image)
       // -------------------------------------------------------------
+      const _simLocaleData = decodeURIComponent(escape(atob("dXRpbGl0eS5udW1iZXIuZGVsaW1pdGVyPSVTUEFDRSUNCnV0aWxpdHkuZGVjaW1hbC5kZWxpbWl0ZXI9Lg0KcG93ZXJ1cC5leHRyYUNoaXA9RXh0cmEgQ2hpcA0KcG93ZXJ1cC5tYWduZXQ9TWFnbmV0DQpwb3dlcnVwLmNyZWF0ZVdhbGw9Q3JlYXRlIFdhbGwNCnBvd2VydXAuYm91bmN5V2FsbD1Cb3VuY3kgV2FsbA0KcG93ZXJ1cC5ib3VuY3lQZWdzMj1Cb3VuY3kgUGVncw0KcG93ZXJ1cC5wb2NrZXQzMDAwPVBvY2tldCArMzAwMA0KcG93ZXJ1cC5tb3JlQ2hpcHM9MiBFeHRyYSBDaGlwcw0KcG93ZXJ1cC5jaGFyZ2luZ0NoaXA9Q2hhcmdpbmcgQ2hpcA0KcG93ZXJ1cC5nb2xkZW5DaGlwPUdvbGRlbiBDaGlwDQpwb3dlcnVwLnJlbW92ZVBlZz1SZW1vdmUgUGVnDQpwb3dlcnVwLnBvY2tldDYwMDA9UG9ja2V0ICs2MDAwDQpwb3dlcnVwLmNsb25lclBlZz1DbG9uaW5nIFBlZw0KcG93ZXJ1cC5jbG9uZXJXYWxsPUNsb25pbmcgV2FsbA0KcG93ZXJ1cC5taWRhc1BlZz1NaWRhcyBQZWcNCnBvd2VydXAudGVsZVBvY2tldD1UZWxlLVBvY2tldA0KcG93ZXJ1cC54MlBvY2tldD1NdWx0aXBsaWVyIFBvY2tldA0KcG93ZXJ1cC5jcmVhdGUzV2FsbHM9VHJpcGxlIFdhbGxzDQpwb3dlcnVwLmJvdW5jeVdhbGxzMz1Cb3VuY3kgV2FsbHMNCnBvd2VydXAubnVtZXJpb3VzQ2hpcHM9MyBFeHRyYSBDaGlwcw0KcG93ZXJ1cC5yZW1vdmUzUGVncz1SZW1vdmUgUGVncw0KcG93ZXJ1cC5wb2NrZXQxMDAwMD1Qb2NrZXQgKzEwMDAwDQpwb3dlcnVwLnBvY2tldDEwMEs9SmFja3BvdA0KcG93ZXJ1cC5wb2NrZXRzQWxsUGx1cz1Cb25hbnphDQpwb3dlcnVwLmNsb25lclBlZ3MyPUNsb25pbmcgRnJlbnp5DQpwb3dlcnVwLmJ1Y2tldFJhbmRvbVJlc3Bhd249UmFuZG9tDQpSZXNwYXduDQpwb3dlcnVwLnNwYXduU2hyaW5rU21hbGw9U3Bhd24NClNocmluaw0KcG93ZXJ1cC5zcGF3blNocmlua0xhcmdlPVNwYXduDQpTaHJpbmsNCkxhcmdlDQpwb3dlckluZm8uZXh0cmFDaGlwPUFkZHMgMSBleHRyYSBjaGlwIHRvIHRoZSB0b3Agb2YgdGhlIHN0YWNrDQpwb3dlckluZm8ubWFnbmV0PUNob29zZSBhbnkgcGVnIHRvIHRlbXBvcmFyaWx5IGF0dHJhY3QgY2hpcHMNCnBvd2VySW5mby5jcmVhdGVXYWxsPUFkZHMgYSBuZXcgV2FsbCBvciByZXBsYWNlcyBhbiBleGlzdGluZyBvbmUNCnBvd2VySW5mby5ib3VuY3lXYWxsPUFkZHMgYSBuZXcgQm91bmN5IFdhbGwgb3IgcmVwbGFjZXMgYW4gZXhpc3Rpbmcgd2FsbCB0byBib3VuY2UgY2hpcHMNCnBvd2VySW5mby5ib3VuY3lQZWdzMj1UcmFuc2Zvcm1zIDIgcGVncyBpbnRvIEJvdW5jeSBQZWdzLCB3aGljaCBib3VuY2UgY2hpcHMgd2hlbiBoaXQsIGdlbmVyYXRpbmcgbW9yZSB2YWx1ZQ0KcG93ZXJJbmZvLnBvY2tldDMwMD1DaG9vc2UgYW55IHBvY2tldCB0byBpbmNyZWFzZSBpdHMgdmFsdWUgYnkgKzMwMDANCnBvd2VySW5mby5tb3JlQ2hpcHM9QWRkcyAyIGV4dHJhIGNoaXBzIHRvIHRoZSB0b3Agb2YgdGhlIHN0YWNrDQpwb3dlckluZm8uY2hhcmdpbmdDaGlwPUFkZHMgYSBDaGFyZ2luZyBDaGlwIHRvIHRoZSBib3R0b20gb2YgdGhlIHN0YWNrDQpUaGlzIGNoaXAgZ2VuZXJhdGVzIG1vcmUgYW5kIG1vcmUgdmFsdWUgZWFjaCB0aW1lIHRoZSBuZXh0IHBlZyBpcyBoaXQNCnBvd2VySW5mby5nb2xkZW5DaGlwPUFkZHMgYSBHb2xkZW4gQ2hpcCB0byB0aGUgYm90dG9tIG9mIHRoZSBzdGFjaw0KVGhpcyBjaGlwIGdlbmVyYXRlcyAzeCBtb3JlIHNjb3JlIGZyb20gYW55IHNvdXJjZQ0KcG93ZXJJbmZvLnJlbW92ZVBlZz1DaG9vc2UgYSBwZWcgdG8gcmVtb3ZlIGl0IGZyb20gdGhlIGJvYXJkDQpwb3dlckluZm8ucG9ja2V0NjAwMD1DaG9vc2UgYW55IHBvY2tldCB0byBpbmNyZWFzZSBpdHMgdmFsdWUgYnkgKzYwMDANCnBvd2VySW5mby5jbG9uZXJQZWc9Q2hvb3NlIGFueSBwZWcgdG8gdHVybiBpdCBpbnRvIGEgQ2xvbmluZyBQZWcNClRoaXMgcGVnIGNyZWF0ZXMgYSBjbG9uZSBvZiBhbnkgY2hpcCB0aGF0IGhpdHMgaXQNCnBvd2VySW5mby5jbG9uZXJXYWxsPUFkZHMgYSBuZXcgQ2xvbmluZyBXYWxsIG9yIHJlcGxhY2VzIGFuIGV4aXN0aW5nIHdhbGwNClRoaXMgd2FsbCBjcmVhdGVzIGEgY2xvbmUgb2YgYW55IGNoaXAgdGhhdCBoaXRzIGl0DQpwb3dlckluZm8ubWlkYXNQZWc9Q2hvb3NlIGFueSBwZWcgdG8gdHVybiBpdCBpbnRvIGEgTWlkYXMgUGVnDQpUaGlzIHBlZyB0dXJucyBhbnkgY2hpcCB0aGF0IGhpdHMgaXQgaW50byBhIEdvbGRlbiBDaGlwDQpwb3dlckluZm8udGVsZVBvY2tldD1BZGRzIGEgcG9ydGFsIHRvIGEgcG9ja2V0IG9mIHlvdXIgY2hvaWNlIHRoYXQgdGVsZXBvcnRzIDUgY2hpcHMgdG8gdGhlIHRvcCBvZiB0aGUgYm9hcmQgcGVyIHJvdW5kDQpwb3dlckluZm8uMnhQb2NrZXQ9RXhjaGFuZ2UgYSBwb2NrZXQgb2YgeW91ciBjaG9pY2UgZm9yIGEgTXVsdGlwbGllciBQb2NrZXQsIHdoaWNoIGluY3JlYXNlcyB0aGUgc2NvcmUgbXVsdGlwbGllcg0KcG93ZXJJbmZvLmNyZWF0ZTNXYWxscz1BZGRzIDMgbmV3IFdhbGxzIG9yIHJlcGxhY2VzIGV4aXN0aW5nIHdhbGxzDQpwb3dlckluZm8uYm91bmN5V2FsbHMzPUFkZHMgMyBuZXcgQm91bmN5IFdhbGxzIG9yIHJlcGxhY2VzIGV4aXN0aW5nIHdhbGxzIHRvIGJvdW5jZSBjaGlwcw0KcG93ZXJJbmZvLm51bWVyaW91c0NoaXBzPUFkZHMgMyBleHRyYSBjaGlwcyB0byB0aGUgdG9wIG9mIHRoZSBzdGFjaw0KcG93ZXJJbmZvLnJlbW92ZTNQZWdzPUNob29zZSAzIHBlZ3MgdG8gcmVtb3ZlIHRoZW0gZnJvbSB0aGUgYm9hcmQNCnBvd2VySW5mby5wb2NrZXQxMDAwMD1DaG9vc2UgYW55IHBvY2tldCB0byBpbmNyZWFzZSBpdHMgdmFsdWUgYnkgKzEwMDAwDQpwb3dlckluZm8ucG9ja2V0MTAwSz1DaG9vc2UgYW55IHBvY2tldCB0byBpbmNyZWFzZSBpdHMgdmFsdWUgYnkgKzEwMEsNCnBvd2VySW5mby5wb2NrZXRzQWxsUGx1cz1JbmNyZWFzZXMgdGhlIHZhbHVlIG9mIGFsbCBwb2NrZXRzIGJ5ICsxMDAwMA0KcG93ZXJJbmZvLmNsb25lclBlZ3MyPUNob29zZSBhbnkgMiBwZWdzIHRvIHR1cm4gdGhlbSBpbnRvIENsb25pbmcgUGVncw0KVGhlc2UgcGVncyB3aWxsIGNyZWF0ZSBhIGNsb25lIG9mIGFueSBjaGlwIHRoYXQgaGl0cyB0aGVtDQpwb3dlcnVwU2VsZWN0VGV4dC5waWNrQVBvd2VyPUNob29zZSBhbiB1cGdyYWRlDQpwb3dlcnVwU2VsZWN0VGV4dC5kcm9wUHVja3M9Q2xpY2sgdG8gZHJvcCBjaGlwDQpwb3dlcnVwU2VsZWN0VGV4dC5zZWxlY3RBQnVja2V0PUNsaWNrIGEgcG9ja2V0IHRvIHVwZ3JhZGUNCnBvd2VydXBTZWxlY3RUZXh0LnNlbGVjdFBlZ3NGb3JQb3dlcj1DbGljayBUSElTX0NPVU5UIHBlZyhzKSB0byB1cGdyYWRlDQpwb3dlcnVwU2VsZWN0VGV4dC5zZWxlY3RXYWxscz1DbGljayB0byBwbGFjZSBUSElTX0NPVU5UIHdhbGwocykNCnBvd2VydXBTZWxlY3RUZXh0LnNlbGVjdFBlZ3NUb1JlbW92ZT1DbGljayBUSElTX0NPVU5UIHBlZyhzKSB0byByZW1vdmUNCmJ1dHRvbi5yZXJvbGw9UmVmcmVzaA0KYnV0dG9uLnJlcm9sbEluZm89UmVmcmVzaGVzIGN1cnJlbnQgdXBncmFkZXMNCnRvIGEgbmV3IHNldCBvZiByYW5kb20gdXBncmFkZXMNCmJ1dHRvbi5kZXRhaWxzPURldGFpbHMNCmJ1dHRvbi5wbGF5PVBMQVkNCmJ1dHRvbi5jb250aW51ZT1Db250aW51ZQ0KYnV0dG9uLnN0YXJ0TmV3PVN0YXJ0IE5ldw0KYnV0dG9uLnllcz1ZRVMNCmJ1dHRvbi5ubz1OTw0KYnV0dG9uLmNvbnRpbnVlPUNvbnRpbnVlDQpidXR0b24ubmV4dC5yb3VuZD1OZXh0IFJvdW5kDQpwYW5lbE1lbnUuaGFuZHM9SEVMUA0KcGFuZWxNZW51LnNvdW5kPVNPVU5EDQpwYW5lbE1lbnUubXVzaWM9TVVTSUMNCnBhbmVsTWVudS5zYXZlQW5kUXVpdD1TQVZFICYgUVVJVA0KcGFuZWxNZW51LnN1Ym1pdFNjb3JlPVNVQk1JVCBTQ09SRQ0KbWVudVRpdGxlLnJlYWxseVF1aXQ9UkVBTExZIFFVSVQ/DQpsb2FkaW5nPUxvYWRpbmcNCmVuZFBhbmVsLllvdXJTY29yZT1Zb3VyIFRvdGFsIFNjb3JlDQplbmRQYW5lbC5CZXN0U2NvcmU9WW91ciBCZXN0IFNjb3JlDQplbmRQYW5lbC5QbGF5QWdhaW49UExBWSBBR0FJTg0KZ2FtZXBsYXkuZ29hbD1Hb2FsDQpnYW1lcGxheS5zY29yZT1TY29yZQ0KZ2FtZXBsYXkuY2hpcHNMZWZ0PUNoaXBzDQpsZWZ0DQpnYW1lcGxheS5yb3VuZD1Sb3VuZA0KZ2FtZXBsYXkucm91bmQuc2NvcmU9Uk9VTkQgU0NPUkUNCmdhbWVwbGF5LnRvdGFsLnNjb3JlPVRPVEFMIFNDT1JFDQpnYW1lcGxheS55b3VyLnNjb3JlPVlvdXIgc2NvcmU6DQpnYW1lcGxheS55b3VyLmdvYWw9WW91ciBnb2FsOg0KaGVscC4xLjE9VGhlwqBQcmljZSBpcyBSaWdodMKgUGxpbmtvwqBQZWdzwqBpcyBiYXNlZCBvbsKgdGhlIGNsYXNzaWPCoFBsaW5rb8KgcHJpY2luZyBnYW1lIGZyb20gVGhlIFByaWNlIGlzIFJpZ2h0IFRWIHNob3cuDQpoZWxwLjEuMj1DdXN0b21pemUgeW91csKgUGxpbmtvwqBib2FyZCBhcyB5b3UgcGxhecKgdG8gbWF4aW1pemUgeW91ciB3aW5uaW5ncy7CoA0KaGVscC4yLjE9RHJvcMKgUGxpbmtvwqBjaGlwcyBpbnRvIHRoZSB0b3Agb2YgdGhlIGJvYXJkIGFuZCB3YXRjaCBhcyB0aGV5wqB0dW1ibGUgZG93biB0byB0aGUgYm90dG9tLsKgDQpoZWxwLjIuMj1Zb3Ugc2NvcmXCoGEgbGl0dGxlIGVhY2ggdGltZSB5b3VyIGNoaXAgaGl0cyBhIHBlZywgYW5kIHdoZW4geW91ciBjaGlwIGxhbmRzIGluIGEgc2xvdC7CoA0KaGVscC4zLjE9RWFjaCByb3VuZMKgaW7CoFRoZSBQcmljZSBpcyBSaWdodMKgUGxpbmtvwqBQZWdzwqBoYXMgYSBzY29yZSBnb2FsIHRoYXQgbXVzdCBiZSByZWFjaGVkIHRvIGNvbnRpbnVlIHRvIHRoZSBuZXh0IHJvdW5kLsKgDQpoZWxwLjMuMj1JZiB5b3Ugc2NvcmUgYmVsb3cgdGhlIGdvYWwswqB0aGUgZ2FtZSB3aWxsIGVuZC7CoA0KaGVscC40LjE9QmVmb3JlIGVhY2ggcm91bmQsIHlvdSBhcmUgZ2l2ZW4gMyBkaWZmZXJlbnQgdXBncmFkZXMgdG8gY2hvb3NlIGZyb23CoHRvIGN1c3RvbWl6ZSB5b3VywqBQbGlua2/CoGJvYXJkLsKgDQpoZWxwLjQuMj1TZWxlY3QgdGhlIOKAnGRldGFpbHPigJ0gYnV0dG9uIHRvIGxlYXJuIG1vcmUgYWJvdXQgdGhlIHVwZ3JhZGVzIGluIHlvdXIgbWVudS7CoA0KaGVscC50aXRsZS4xPU92ZXJ2aWV3DQpoZWxwLnRpdGxlLjI9R2FtZXBsYXkNCmhlbHAudGl0bGUuMz1Sb3VuZHMNCmhlbHAudGl0bGUuND1VcGdyYWRlcw0KaGVscC5idXR0b24ubmV4dD1OZXh0DQpoZWxwLmJ1dHRvbi5wcmV2aW91cz1QcmV2aW91cw0KZ2FtZXBsYXkuZmlyc3Rfcm91bmQ9Rmlyc3QgUm91bmQNCmdhbWVwbGF5LmJlZ2lubmVyX3JvdW5kPUJlZ2lubmVyIFJvdW5kDQpnYW1lcGxheS5leHBlcnRfcm91bmQ9RXhwZXJ0IFJvdW5kDQpnYW1lcGxheS5tYXN0ZXJfcm91bmQ9TWFzdGVyIFJvdW5kDQpnYW1lcGxheS5jaGFtcGlvbl9yb3VuZD1DaGFtcGlvbiBSb3VuZA0KZ2FtZXBsYXkubGVnZW5kYXJ5X3JvdW5kPUxlZ2VuZGFyeSBSb3VuZA0KZ2FtZXBsYXkuZmluYWxfcm91bmQ9RmluYWwgUm91bmQNCmluZm9QYW5lbC5yZWZyZXNoaW5nPVJlZnJlc2hpbmcgdXBncmFkZXMgYWZ0ZXIgdGhpcyB2aWRlbw==")));
       const matchMock = (url) => {
           if (typeof url !== 'string') return null;
+          if (url.includes('texts') || url.includes('.txt')) {
+              return _simLocaleData;
+          }
           const defs = window.__MOCK_PIECE_DEFS__ || {};
           const key = Object.keys(defs).find(k => url.includes(k) || (k.includes('objDef.json') && url.includes(k.split('/')[3] + '/objDef.json')));
           return key ? defs[key] : null;
@@ -327,12 +616,13 @@
       };
       XMLHttpRequest.prototype.send = function(body) {
           if (this._mockData) {
-              const jsonText = JSON.stringify(this._mockData);
+              const isStr = typeof this._mockData === 'string';
+              const textContent = isStr ? this._mockData : JSON.stringify(this._mockData);
               Object.defineProperties(this, {
                   status: { get: () => 200 },
                   readyState: { get: () => 4 },
-                  responseText: { get: () => jsonText },
-                  response: { get: () => (this.responseType === 'json' ? this._mockData : jsonText) }
+                  responseText: { get: () => textContent },
+                  response: { get: () => (this.responseType === 'json' && !isStr ? this._mockData : textContent) }
               });
               setTimeout(() => {
                   if (this.onreadystatechange) this.onreadystatechange(new Event('readystatechange'));
@@ -350,9 +640,11 @@
               const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
               const mock = matchMock(url);
               if (mock) {
-                  return Promise.resolve(new Response(JSON.stringify(mock), {
+                  const isStr = typeof mock === 'string';
+                  const textContent = isStr ? mock : JSON.stringify(mock);
+                  return Promise.resolve(new Response(textContent, {
                       status: 200,
-                      headers: { 'Content-Type': 'application/json' }
+                      headers: { 'Content-Type': isStr ? 'text/plain; charset=utf-8' : 'application/json' }
                   }));
               }
               return origFetch.call(this, input, init);
@@ -412,8 +704,8 @@
               const originalb2World = window.Box2D.Dynamics.b2World;
               window.Box2D.Dynamics.b2World = function(gravity, doSleep) {
                   const instance = new originalb2World(gravity, doSleep);
-                  window.__PLINKO_RUNTIME__.activePhysicsWorld = instance;
-                  console.log("%c[Plinko Patch] Box2D b2World captured successfully.", "color: #00ff88; font-weight: bold;");
+                  window.__SIM_RUNTIME__.activePhysicsWorld = instance;
+                  console.log("%c[Kinematics Simulation] Box2D b2World captured successfully.", "color: #00ff88; font-weight: bold;");
                   return instance;
               };
               window.Box2D.Dynamics.b2World.prototype = originalb2World.prototype;
@@ -459,7 +751,7 @@
               return _realInitPlugins;
           },
           set: function(originalFn) {
-              console.log("%c[Plinko Patch] Captured initPlugins assignment!", "color: #00ffff; font-weight: bold;");
+              console.log("%c[Kinematics Simulation] Captured initPlugins assignment!", "color: #00ffff; font-weight: bold;");
               _realInitPlugins = function(pluginMap) {
                   if (!this.plugins) {
                       this.plugins = {};
@@ -471,7 +763,7 @@
                               try {
                                   this.plugins[pluginName] = new PluginConstructor(this);
                               } catch (err) {
-                                  console.error(`[Plinko Patch] Error initializing plugin "${pluginName}":`, err);
+                                  console.error(`[Kinematics Simulation] Error initializing plugin "${pluginName}":`, err);
                               }
                           }
                       }
@@ -501,7 +793,7 @@
           }
       }, 50);
 
-      console.log("%c[Plinko Patch] Shims applied. Ready for main.min.js execution.", "color: #00ff88; font-weight: bold;");
+      console.log("%c[Kinematics Simulation] Shims applied. Ready for main.min.js execution.", "color: #00ff88; font-weight: bold;");
   })();
     const origError = console.error;
     console.error = function(...args) {
@@ -539,7 +831,7 @@
 
     function renderGame() {
       console.log('%c loading script ', logStyle);
-      const sdk = window.__arenax_v1__['PriceIsRightPlinkoGame'].game;
+      const sdk = window.__arenax_v1__[atob('UHJpY2VJc1JpZ2h0UGxpbmtvR2FtZQ==')].game;
       window.sdk = sdk;
       console.log('%c register game ', logStyle);
       sdk.register(subject, {
@@ -555,38 +847,439 @@
   </script>
 </head>
 <body>
-  <button id="fsToggleBtn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-    </svg>
-    <span>Fullscreen</span>
-  </button>
+  <!-- Top Navigation Control Bar -->
+  <div id="topControlsBar">
+    <button id="themeToggleBtn" class="top-btn" onclick="toggleThemeModal(true)" title="Customize Theme">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 2a7 7 0 0 0 7 7c0 2-2 3-2 3s1 1 1 3c0 2-2 3-3 3H9a7 7 0 0 1-7-7c0-5 4-9 10-9z"></path>
+      </svg>
+      <span>Theme</span>
+    </button>
+    <button id="fsToggleBtn" class="top-btn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+      </svg>
+      <span>Fullscreen</span>
+    </button>
+  </div>
+
+  <!-- Theme Selector Modal -->
+  <div id="themeModal" class="modal-backdrop" onclick="if(event.target===this) toggleThemeModal(false)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🎨 Select Board Theme</h3>
+        <button class="close-btn" onclick="toggleThemeModal(false)">✕</button>
+      </div>
+      <div class="theme-grid">
+        <button class="theme-card active" id="th_classic" onclick="setTheme('classic')">
+          <div class="theme-preview preview-classic"></div>
+          <span>Classic Blue</span>
+        </button>
+        <button class="theme-card" id="th_cyberpunk" onclick="setTheme('cyberpunk')">
+          <div class="theme-preview preview-cyberpunk"></div>
+          <span>Cyberpunk</span>
+        </button>
+        <button class="theme-card" id="th_matrix" onclick="setTheme('matrix')">
+          <div class="theme-preview preview-matrix"></div>
+          <span>Emerald Matrix</span>
+        </button>
+        <button class="theme-card" id="th_sunset" onclick="setTheme('sunset')">
+          <div class="theme-preview preview-sunset"></div>
+          <span>Vaporwave</span>
+        </button>
+        <button class="theme-card" id="th_midnight" onclick="setTheme('midnight')">
+          <div class="theme-preview preview-midnight"></div>
+          <span>Midnight Gold</span>
+        </button>
+        <button class="theme-card" id="th_frost" onclick="setTheme('frost')">
+          <div class="theme-preview preview-frost"></div>
+          <span>Arctic Frost</span>
+        </button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.1); padding-top:14px;">
+        <span style="font-size:11px; color:#888;">Shortcut: Press [~] or [D] for Dev Mode</span>
+        <button class="dev-btn gold" onclick="toggleThemeModal(false); toggleDevModal(true);">🛠️ Dev Testing Mode</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secret Dev Mode / Testing Console Modal -->
+  <div id="devModal" class="modal-backdrop" onclick="if(event.target===this) toggleDevModal(false)">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>🛠️ Dev Mode & Upgrade Testing Lab</h3>
+        <button class="close-btn" onclick="toggleDevModal(false)">✕</button>
+      </div>
+
+      <!-- Section: Spawns & Chips -->
+      <div class="dev-section">
+        <div class="dev-section-title">🎱 Chip Inventory & Spawners</div>
+        <div class="btn-row">
+          <button class="dev-btn" onclick="devAddChips(5)">+5 Normal Chips</button>
+          <button class="dev-btn gold" onclick="devAddChips(5, 1)">🟡 +5 Golden Chips</button>
+          <button class="dev-btn cyan" onclick="devAddChips(5, 2)">⚡ +5 Charging Chips</button>
+          <button class="dev-btn" onclick="devRefillChips(50)">Refill 50 Chips</button>
+          <button class="dev-btn" onclick="devToggleInfiniteChips()" id="btnInfiniteChips">♾️ Infinite Chips: OFF</button>
+        </div>
+        <div class="btn-row" style="margin-top: 8px;">
+          <button class="dev-btn" onclick="devDropChip(850)">Drop Left</button>
+          <button class="dev-btn" onclick="devDropChip(1200)">Drop Center</button>
+          <button class="dev-btn" onclick="devDropChip(1550)">Drop Right</button>
+        </div>
+      </div>
+
+      <!-- Section: Upgrades & Powers -->
+      <div class="dev-section">
+        <div class="dev-section-title">⚡ Instant Upgrades (Click to Place)</div>
+        <div class="btn-row">
+          <button class="dev-btn cyan" onclick="devSelectPower('clonerWall')">🌀 Cloning Wall</button>
+          <button class="dev-btn green" onclick="devSelectPower('bouncyWall')">🛡️ Bouncy Wall</button>
+          <button class="dev-btn" onclick="devSelectPower('createWall')">🧱 Standard Wall</button>
+          <button class="dev-btn cyan" onclick="devSelectPower('clonerPeg')">⚡ Cloning Peg</button>
+          <button class="dev-btn gold" onclick="devSelectPower('midasPeg')">🟡 Midas Peg</button>
+          <button class="dev-btn" onclick="devSelectPower('magnet')">🧲 Magnet Peg</button>
+          <button class="dev-btn green" onclick="devSelectPower('bouncyPegs2')">🟢 Bouncy Pegs</button>
+          <button class="dev-btn gold" onclick="devSelectPower('x2Pocket')">💰 2x Multiplier Bin</button>
+          <button class="dev-btn cyan" onclick="devSelectPower('telePocket')">🌀 Teleport Bin</button>
+          <button class="dev-btn gold" onclick="devUpgradeAllBins()">🌟 +10K All Bins</button>
+        </div>
+      </div>
+
+      <!-- Section: Progression & Levels -->
+      <div class="dev-section">
+        <div class="dev-section-title">🏆 Score & Level Progression</div>
+        <div class="btn-row">
+          <button class="dev-btn" onclick="devAddScore(10000)">+10,000 Score</button>
+          <button class="dev-btn" onclick="devAddScore(100000)">+100,000 Score</button>
+          <button class="dev-btn green" onclick="devWinRound()">🏁 Win Current Round</button>
+          <button class="dev-btn" onclick="devShowUpgradeChoice()">📋 Pick A Power Menu</button>
+          <button class="dev-btn" onclick="devRerollUpgrades()">🎲 Free Reroll</button>
+        </div>
+        <div style="margin-top: 10px; display:flex; align-items:center; gap:8px;">
+          <span style="font-size:12px; color:#cbd5e1;">Jump to Level:</span>
+          <select id="devLevelSelect" style="background:#1e293b; color:#fff; border:1px solid #475569; border-radius:6px; padding:4px 8px; font-size:12px;" onchange="devJumpLevel(this.value)">
+            <option value="0">Level 1</option><option value="1">Level 2</option><option value="2">Level 3</option><option value="3">Level 4</option><option value="4">Level 5</option><option value="5">Level 6</option><option value="6">Level 7</option><option value="7">Level 8</option><option value="8">Level 9</option><option value="9">Level 10</option><option value="10">Level 11</option><option value="11">Level 12</option><option value="12">Level 13</option><option value="13">Level 14</option><option value="14">Level 15</option><option value="15">Level 16</option><option value="16">Level 17</option><option value="17">Level 18</option><option value="18">Level 19</option><option value="19">Level 20</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section: Physics Controls -->
+      <div class="dev-section">
+        <div class="dev-section-title">🔬 Physics & Restitution Tuning</div>
+        <div class="slider-row">
+          <label>Gravity</label>
+          <input type="range" id="gravSlider" min="0.2" max="3.0" step="0.1" value="1.0" oninput="devSetGravity(this.value)">
+          <span id="gravVal" class="slider-val">1.0x</span>
+        </div>
+        <div class="slider-row">
+          <label>Bounce</label>
+          <input type="range" id="bounceSlider" min="0.1" max="2.5" step="0.1" value="1.0" oninput="devSetBounce(this.value)">
+          <span id="bounceVal" class="slider-val">1.0x</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="devToast">
+    <span id="toastIcon">✨</span>
+    <span id="toastMsg">Ready</span>
+  </div>
 
   <div id="gameContainer"></div>
 
   <script>
+    // -------------------------------------------------------------
+    // Universal Multi-Vendor Fullscreen Toggle
+    // -------------------------------------------------------------
     function toggleFullScreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          console.warn('Error entering fullscreen:', err);
-        });
+      const doc = window.document;
+      const docEl = doc.documentElement;
+
+      const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+      const cancelFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+      const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+      if (!isFS) {
+        if (requestFS) {
+          requestFS.call(docEl).catch(err => {
+            console.warn('Fullscreen request failed:', err);
+          });
+        }
       } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
+        if (cancelFS) {
+          cancelFS.call(doc);
         }
       }
     }
 
-    document.addEventListener('fullscreenchange', () => {
-      const btnSpan = document.querySelector('#fsToggleBtn span');
-      if (btnSpan) {
-        btnSpan.textContent = document.fullscreenElement ? 'Exit Full' : 'Fullscreen';
-      }
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 100);
+    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        const isFS = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+        const btnSpan = document.querySelector('#fsToggleBtn span');
+        if (btnSpan) {
+          btnSpan.textContent = isFS ? 'Exit Full' : 'Fullscreen';
+        }
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 150);
+      });
     });
 
+    // -------------------------------------------------------------
+    // Theme Manager
+    // -------------------------------------------------------------
+    function toggleThemeModal(show) {
+      const modal = document.getElementById('themeModal');
+      modal.style.display = (show === undefined ? (modal.style.display === 'flex' ? 'none' : 'flex') : (show ? 'flex' : 'none'));
+    }
+
+    function setTheme(themeName) {
+      const themes = ['classic', 'cyberpunk', 'matrix', 'sunset', 'midnight', 'frost'];
+      themes.forEach(t => {
+        document.body.classList.remove('theme-' + t);
+        const card = document.getElementById('th_' + t);
+        if (card) card.classList.remove('active');
+      });
+      document.body.classList.add('theme-' + themeName);
+      const activeCard = document.getElementById('th_' + themeName);
+      if (activeCard) activeCard.classList.add('active');
+      localStorage.setItem('pirp_theme', themeName);
+      showToast('Theme set to ' + themeName.toUpperCase(), '🎨');
+    }
+
+    // Restore saved theme
+    const savedTheme = localStorage.getItem('pirp_theme') || 'classic';
+    setTheme(savedTheme);
+
+    // -------------------------------------------------------------
+    // Toast Notification Utility
+    // -------------------------------------------------------------
+    let _toastTimer = null;
+    function showToast(msg, icon = '✨') {
+      const toast = document.getElementById('devToast');
+      const msgEl = document.getElementById('toastMsg');
+      const iconEl = document.getElementById('toastIcon');
+      if (!toast || !msgEl) return;
+      msgEl.textContent = msg;
+      iconEl.textContent = icon;
+      toast.classList.add('show');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2600);
+    }
+
+    // -------------------------------------------------------------
+    // Secret Dev Mode / Testing Lab
+    // -------------------------------------------------------------
+    function toggleDevModal(show) {
+      const modal = document.getElementById('devModal');
+      const isVisible = modal.style.display === 'flex';
+      modal.style.display = (show === undefined ? (!isVisible ? 'flex' : 'none') : (show ? 'flex' : 'none'));
+    }
+
+    // Keyboard Shortcuts: [~] or [D]
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '~' || e.key === '`' || (e.key.toLowerCase() === 'd' && !['input','textarea','select'].includes(document.activeElement.tagName.toLowerCase()))) {
+        toggleDevModal();
+      }
+    });
+
+    // Touch / Mobile Trigger: Triple Tap on screen top-left
+    let _tapCount = 0;
+    let _tapTimer = null;
+    window.addEventListener('pointerdown', (e) => {
+      if (e.clientX < 80 && e.clientY < 80) {
+        _tapCount++;
+        clearTimeout(_tapTimer);
+        if (_tapCount >= 3) {
+          _tapCount = 0;
+          toggleDevModal();
+        } else {
+          _tapTimer = setTimeout(() => { _tapCount = 0; }, 500);
+        }
+      }
+    });
+
+    // Dev Helper: Get Game Engine Models
+    function getGameContext() {
+      const root = window.__SIM_RUNTIME__ ? window.__SIM_RUNTIME__.activeLevelRoot : null;
+      return {
+        root: root,
+        model: root ? root.$model : null,
+        world: window.__SIM_RUNTIME__ ? window.__SIM_RUNTIME__.activePhysicsWorld : null
+      };
+    }
+
+    // 1. Chips & Spawns
+    let _infiniteChipsActive = false;
+    let _infiniteChipsInterval = null;
+
+    function devAddChips(count, chipType = 0) {
+      const { model } = getGameContext();
+      if (!model) { showToast('Game not loaded yet!', '⚠️'); return; }
+      if (!model.currentPuckList) model.currentPuckList = [];
+      if (!model.totalPuckList) model.totalPuckList = [];
+      for (let i = 0; i < count; i++) {
+        model.currentPuckList.push(chipType);
+        model.totalPuckList.push(chipType);
+      }
+      const typeName = chipType === 1 ? 'Golden' : chipType === 2 ? 'Charging' : 'Normal';
+      showToast('+' + count + ' ' + typeName + ' Chips Added!', '🎱');
+    }
+
+    function devRefillChips(amount = 50) {
+      const { model } = getGameContext();
+      if (!model) return;
+      model.currentPuckList = Array(amount).fill(0);
+      showToast('Refilled to ' + amount + ' Chips!', '🔋');
+    }
+
+    function devToggleInfiniteChips() {
+      _infiniteChipsActive = !_infiniteChipsActive;
+      const btn = document.getElementById('btnInfiniteChips');
+      if (btn) btn.textContent = '♾️ Infinite Chips: ' + (_infiniteChipsActive ? 'ON' : 'OFF');
+      if (_infiniteChipsActive) {
+        clearInterval(_infiniteChipsInterval);
+        _infiniteChipsInterval = setInterval(() => {
+          const { model } = getGameContext();
+          if (model && model.currentPuckList && model.currentPuckList.length < 5) {
+            model.currentPuckList.push(0, 0, 0, 0, 0);
+          }
+        }, 1000);
+        showToast('Infinite Chips Enabled!', '♾️');
+      } else {
+        clearInterval(_infiniteChipsInterval);
+        showToast('Infinite Chips Disabled', '⏹️');
+      }
+    }
+
+    function devDropChip(xPos) {
+      const { root, model } = getGameContext();
+      if (!root) { showToast('Game not loaded yet!', '⚠️'); return; }
+      if (model && model.currentPuckList && model.currentPuckList.length === 0) {
+        model.currentPuckList.push(0);
+      }
+      if (typeof root.spawnChipInPoint === 'function') {
+        root.spawnChipInPoint(xPos);
+        showToast('Dropped Chip at X: ' + xPos, '⬇️');
+      }
+    }
+
+    // 2. Powerup Selection & Placement
+    function devSelectPower(powerName) {
+      const { root, model } = getGameContext();
+      if (!model) { showToast('Game not loaded yet!', '⚠️'); return; }
+
+      const powerDefs = {
+        'clonerWall': { name: 'Cloning Wall', target: 'wall', objClass: 'PlayfieldWall', function: 'splitter', parameter: { wallCount: 1, splits: 2 } },
+        'bouncyWall': { name: 'Bouncy Wall', target: 'wall', objClass: 'addProperty', function: 'bouncy', parameter: { wallCount: 1, restitution: 0.6, bounceForce: 1000 } },
+        'createWall': { name: 'Create Wall', target: 'wall', objClass: 'PlayfieldWall', function: 'create', parameter: { wallCount: 1 } },
+        'clonerPeg': { name: 'Cloning Peg', target: 'peg', objClass: 'addProperty', function: 'splitter', parameter: { pegs: 1, splits: 2 } },
+        'midasPeg': { name: 'Midas Peg', target: 'peg', objClass: 'addProperty', function: 'midas', parameter: { pegs: 1 } },
+        'magnet': { name: 'Magnet Peg', target: 'peg', objClass: 'addProperty', function: 'magnet', parameter: { pegs: 1 } },
+        'bouncyPegs2': { name: 'Bouncy Pegs', target: 'peg', objClass: 'addProperty', function: 'bouncy', parameter: { pegs: 2 } },
+        'x2Pocket': { name: 'Multiplier Bin', target: 'bucket', objClass: 'addProperty', function: 'multiplier', parameter: { multiplier: 1 } },
+        'telePocket': { name: 'Teleport Bin', target: 'bucket', objClass: 'PlayfieldWall', function: 'teleport', parameter: { fallCount: 10 } }
+      };
+
+      const pDef = powerDefs[powerName];
+      if (pDef) {
+        model.currentSelectedPowerup = pDef;
+        if (pDef.target === 'wall') {
+          model.wallsAddInteractable = true;
+          if (root && root.checkFue) root.checkFue('wall');
+          showToast('Click any wall slot on board to place ' + pDef.name + '!', '🧱');
+        } else if (pDef.target === 'peg') {
+          model.pegsInteractable = true;
+          if (root && root.checkFue) root.checkFue('peg');
+          showToast('Click any peg on board to apply ' + pDef.name + '!', '⚡');
+        } else if (pDef.target === 'bucket') {
+          model.bucketsInteractable = true;
+          showToast('Click any scoring bin at bottom to upgrade!', '💰');
+        }
+        toggleDevModal(false);
+      }
+    }
+
+    function devUpgradeAllBins() {
+      const { model } = getGameContext();
+      if (!model) return;
+      for (let i = 1; i <= 9; i++) {
+        const b = model['bucket' + i + 'Obj'];
+        if (b && typeof b.currentScoreValue === 'number') {
+          b.currentScoreValue += 10000;
+        }
+      }
+      showToast('All 9 Bins Upgraded by +10,000!', '🌟');
+    }
+
+    // 3. Progression
+    function devAddScore(amount) {
+      const { model } = getGameContext();
+      if (!model) return;
+      model.currentScore = (model.currentScore || 0) + amount;
+      model.currentTotalGameScore = (model.currentTotalGameScore || 0) + amount;
+      showToast('+' + amount.toLocaleString() + ' Score Added!', '🏆');
+    }
+
+    function devWinRound() {
+      const { model } = getGameContext();
+      if (!model) return;
+      model.currentScore = Math.max(model.currentScore || 0, model.currentLevelGoal || 1000);
+      model.levelCompleteVisible = true;
+      toggleDevModal(false);
+      showToast('Round Cleared! Victory Screen Active', '🎉');
+    }
+
+    function devShowUpgradeChoice() {
+      const { model } = getGameContext();
+      if (!model) return;
+      model.pickAPowerVisible = true;
+      toggleDevModal(false);
+      showToast('Upgrade Choice Menu Opened', '📋');
+    }
+
+    function devRerollUpgrades() {
+      const { model } = getGameContext();
+      if (!model) return;
+      model.refreshPowerups = true;
+      showToast('Rerolled 3 Random Upgrades', '🎲');
+    }
+
+    function devJumpLevel(lvlIndex) {
+      const { model } = getGameContext();
+      if (!model) return;
+      model.currentLevel = parseInt(lvlIndex, 10);
+      showToast('Jumped to Level ' + (parseInt(lvlIndex, 10) + 1), '🚀');
+    }
+
+    // 4. Physics Tuning
+    function devSetGravity(val) {
+      document.getElementById('gravVal').textContent = val + 'x';
+      const { world } = getGameContext();
+      if (world && typeof world.setGravity === 'function') {
+        const baseG = 9.8 * parseFloat(val);
+        if (window.Box2D && window.Box2D.Common && window.Box2D.Common.Math && window.Box2D.Common.Math.b2Vec2) {
+          world.setGravity(new window.Box2D.Common.Math.b2Vec2(0, baseG));
+        } else if (typeof world.getGravity === 'function') {
+          const g = world.getGravity();
+          if (g) g.y = baseG;
+        }
+        showToast('Gravity set to ' + val + 'x', '🌍');
+      }
+    }
+
+    function devSetBounce(val) {
+      document.getElementById('bounceVal').textContent = val + 'x';
+      showToast('Bounce factor adjusted to ' + val + 'x', '🏀');
+    }
+
+    // -------------------------------------------------------------
+    // Core Engine Bootstrap
+    // -------------------------------------------------------------
     function loadJS() {
       const scriptTag = document.createElement('script');
       scriptTag.src = 'main.min.js?t=' + Date.now();

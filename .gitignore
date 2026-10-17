@@ -13,6 +13,8 @@ deobf_out/
 *.test.js
 
 # Dependencies & Deployment Cache
+dist/
+404.html
 node_modules/
 .npm
 .wrangler/
@@ -25,3 +27,16 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
+.env
+.env.*
+.cache/
+
+# AI Agent Skills & Tooling
+.agents/
+.claude/
+skills-lock.json
+
+# Firebase Caches & Logs
+.firebase/
+*-debug.log*
+
